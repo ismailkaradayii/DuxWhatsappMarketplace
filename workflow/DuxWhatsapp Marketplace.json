@@ -1,0 +1,2068 @@
+{
+  "name": "DuxWhatsapp Marketplace",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        0
+      ],
+      "id": "5bc71579-f066-4f47-b73e-e200b3f0fed6",
+      "name": "WhatsApp Trigger",
+      "webhookId": "c3890ab8-594b-47b5-82b7-b69676f50181",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "QyKAB6WXVtaoNdQI",
+          "name": "WhatsApp OAuth account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Database current_step: {{$json.current_step}}\nUser message: {{$node[\"Prepare Message Data\"].json[\"message_text\"]}}\n\nYou must choose exactly one reply based only on Database current_step.\n\nRules:\n- Ignore the meaning of the user's message unless the current step requires saving that field.\n- If Database current_step is \"start\", reply exactly:\nHello! Welcome to DuxWhatsApp Marketplace 😊\n\nHere’s what I can help you with:\n1) Create a new listing\n2) Browse job, service, event or product listings\n3) Check IKAAS supermarket products\n4) Get help\n\nPlease reply with 1, 2, 3, or 4.\n\nNote: If you want to return to this main menu, just type: menu\n\n- If Database current_step is \"category\", reply exactly:\nGreat! Please choose a category: Services, Jobs, Events, or Products.\n\n- If Database current_step is \"title\", reply exactly:\nNice choice! What is the title of your listing?\n\n- If Database current_step is \"description\", reply exactly:\nPerfect. Please write a short description for your listing.\n\n- If Database current_step is \"contact_info\", reply exactly:\nAlmost done! Please share the contact information for this listing.\n\n- If Database current_step is \"location\", reply exactly:\nGreat. Please send the location or area for this listing.\n\n- If Database current_step is \"completed\", reply exactly:\nYour listing has been saved successfully ✅\n\n- If Database current_step is \"products_menu\", reply exactly:\nSure! Here are some IKAAS supermarket products you can ask about: Milk, Bread Loaf, Eggs, Mineral Water, Coca-Cola, Rice, Pasta, Cheddar Cheese, Yogurt, Potato Chips. \n\nPlease type the product name you want to check.\n\n- If Database current_step is \"browse_menu\", reply exactly:\nSure! Which listings would you like to browse? Please type one of these categories: Jobs, Services, Events, or Products.\n\n- If Database current_step is \"help_menu\", reply exactly:\nI can help you create a new listing, browse existing listings, or check IKAAS supermarket products.\nReply with 1 to create a listing, 2 to browse listings, or 3 to check supermarket products. If you want to return to the main menu at any time, just type: menu\n\nReturn only one of the exact replies above.",
+        "options": {
+          "systemMessage": "=You are DuxWhatsApp Marketplace Assistant, a friendly and helpful WhatsApp bot.\n\nYour tone should be warm, polite, and natural.\nAlways sound welcoming and supportive, like a helpful student assistant.\nKeep replies short, clear, and friendly.\nDo not sound robotic, cold, or overly formal.\nDo not add extra explanations beyond the current step.\nAsk only one thing at a time.\nReturn only the final reply text."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        2096,
+        208
+      ],
+      "id": "8f83007a-fdef-4ca6-8c54-83c3600d40a7",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        2096,
+        384
+      ],
+      "id": "b09dfb91-a0f2-445e-817e-9029db404758",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "poCj1mM7MoGHCFsn",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1122081027647188",
+        "recipientPhoneNumber": "={{$item(0).$node[\"Prepare Message Data\"].json[\"from_number\"]}}",
+        "textBody": "={{$json.reply_text}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        2576,
+        208
+      ],
+      "id": "23aa374c-f14d-48ca-8758-f1fdb827557c",
+      "name": "Send message",
+      "webhookId": "cf3b94c0-4866-41ed-8529-1930d08caf4e",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "gyMePQD1K5uGdDjO",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT IGNORE INTO users (full_name, whatsapp_number)\nVALUES (\n  '{{$node[\"Prepare Message Data\"].json[\"profile_name\"]}}',\n  '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}'\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        80,
+        0
+      ],
+      "id": "feb6c962-ab55-438a-a91c-c1a3bdf8411e",
+      "name": "Execute a SQL query",
+      "alwaysOutputData": true,
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM conversations\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        240,
+        0
+      ],
+      "id": "885f5315-b962-4231-92c0-5b66cf31d875",
+      "name": "MySQL Check Conversation",
+      "alwaysOutputData": true,
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT IGNORE INTO conversations (whatsapp_number, current_step, status)\nVALUES (\n  '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}',\n  'start',\n  'active'\n);",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        640,
+        240
+      ],
+      "id": "e365f0ad-5585-43cb-a908-4206a76677bd",
+      "name": "MySQL Create Conversation",
+      "alwaysOutputData": true,
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET current_step = 'category'\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1008,
+        144
+      ],
+      "id": "c1be7dd9-c9b4-4a90-9158-c73b4696c483",
+      "name": "MySQL Set Step Category",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET \n  category = '{{$node[\"Prepare Message Data\"].json[\"message_text\"]}}',\n  current_step = 'title'\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1376,
+        -240
+      ],
+      "id": "ebde5ae2-e69b-463f-861a-52a88bd8ea13",
+      "name": "MySQL Save Category",
+      "alwaysOutputData": true,
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "beb854e6-1516-48c4-aebe-30ee9fed5b3d",
+              "leftValue": "={{$json.id}}",
+              "rightValue": "category",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        384,
+        0
+      ],
+      "id": "c1634fd8-0e8b-45ba-b842-f73929e59a2e",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM conversations\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1648,
+        0
+      ],
+      "id": "11341698-f4d1-41f8-876a-2897dd945ba8",
+      "name": "MySQL Read Current Step",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "beb854e6-1516-48c4-aebe-30ee9fed5b3d",
+              "leftValue": "={{$node[\"Prepare Message Data\"].json[\"message_text\"].trim().toLowerCase()}}",
+              "rightValue": "^(services|jobs|events|products)$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1104,
+        -224
+      ],
+      "id": "337027c9-5247-4745-bdf3-b8f35b322ee4",
+      "name": "If Valid Category"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET \n  title = '{{$node[\"Prepare Message Data\"].json[\"message_text\"]}}',\n  current_step = 'description'\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1280,
+        -32
+      ],
+      "id": "a625cfa9-46fc-4296-88c6-af0e13f68156",
+      "name": "MySQL Save Title",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM conversations\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1648,
+        -224
+      ],
+      "id": "807876f5-a672-4979-9fdf-764f28299c42",
+      "name": "MySQL Read Current Step After Title",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f0d405d3-47fa-4118-9e4b-22554bd36e35",
+              "name": "from_number",
+              "value": "={{$json.messages[0].from}}",
+              "type": "string"
+            },
+            {
+              "id": "9d21eedc-eb40-453b-aea1-68d99165085a",
+              "name": "message_text",
+              "value": "={{$json.messages[0].text.body}}",
+              "type": "string"
+            },
+            {
+              "id": "3e3cd101-f400-40ea-bbb2-85110a30bca9",
+              "name": "profile_name",
+              "value": "={{$json.contacts[0].profile.name}}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -352,
+        0
+      ],
+      "id": "fa985945-0839-4798-aab0-1a275768e150",
+      "name": "Prepare Message Data"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "cfdc307e-1c70-48ea-8caa-8c57e9a7c83c",
+              "leftValue": "={{$node[\"MySQL Check Conversation\"].json[\"current_step\"]}}",
+              "rightValue": "category",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        896,
+        -192
+      ],
+      "id": "836ffb6a-a43d-4ee4-9358-92683aa15141",
+      "name": "If Step is Category"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fec93f31-68da-49b1-be1a-8ef4831f1309",
+              "leftValue": "={{$node[\"MySQL Check Conversation\"].json[\"current_step\"]}}",
+              "rightValue": "title",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1040,
+        -16
+      ],
+      "id": "a4a21fa3-e83f-423c-95d1-cb4d3f9d80aa",
+      "name": "IF Step Is Title"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3a94df4b-c739-4432-80ec-c730d7be3727",
+              "leftValue": "={{$node[\"MySQL Check Conversation\"].json[\"current_step\"]}}",
+              "rightValue": "description",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1232,
+        192
+      ],
+      "id": "aea02fe2-9ea4-4f04-8435-477a8158a650",
+      "name": "IF Step Is Description"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET \n  description = '{{$node[\"Prepare Message Data\"].json[\"message_text\"]}}',\n  current_step = 'contact_info'\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1456,
+        176
+      ],
+      "id": "1b64446f-f024-4b91-aa8b-d6460ea8a8a0",
+      "name": "MySQL Save Description",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM conversations\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1648,
+        176
+      ],
+      "id": "db77335b-4008-44f8-af3f-9268112ead76",
+      "name": "MySQL Read Current Step After Description",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "73e589bb-bfbb-4cf1-b604-364141f0ec36",
+              "leftValue": "={{$node[\"MySQL Check Conversation\"].json[\"current_step\"]}}",
+              "rightValue": "contact_info",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1264,
+        432
+      ],
+      "id": "68b3eba8-7eef-4b0b-9ef7-38a13c648b2b",
+      "name": "IF Step Is Contact Info"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET \n  contact_info = '{{$node[\"Prepare Message Data\"].json[\"message_text\"]}}',\n  current_step = 'location'\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1456,
+        352
+      ],
+      "id": "92a14359-358a-495e-bad9-9ff1dbaad959",
+      "name": "MySQL Save Contact Info",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM conversations\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1648,
+        352
+      ],
+      "id": "441034c5-a553-4a66-829e-6dc1de90a273",
+      "name": "MySQL Read Current Step After Contact Info",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "749a95c1-6932-4e3b-bd84-178a7ccd3b34",
+              "leftValue": "={{$node[\"MySQL Check Conversation\"].json[\"current_step\"]}}",
+              "rightValue": "location",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1328,
+        640
+      ],
+      "id": "fbf96e40-4665-439a-a976-b4e4bb95012e",
+      "name": "IF Step Is Location"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET \n  location = '{{$node[\"Prepare Message Data\"].json[\"message_text\"]}}',\n  current_step = 'completed'\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1488,
+        544
+      ],
+      "id": "325ed680-11fe-4c0c-8bcd-2a9041903aa2",
+      "name": "MySQL Save Location",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM conversations\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1680,
+        544
+      ],
+      "id": "f28e5a00-087e-4cbb-815b-a2fdaf2acfa8",
+      "name": "MySQL Read Current Step After Location",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO listings (\n  whatsapp_number,\n  category,\n  title,\n  description,\n  contact_info,\n  location,\n  status\n)\nSELECT\n  whatsapp_number,\n  category,\n  title,\n  description,\n  contact_info,\n  location,\n  'active'\nFROM conversations\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}'\n  AND current_step = 'completed';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1888,
+        544
+      ],
+      "id": "4853bae6-79fc-4723-a413-7da0e49fd8a1",
+      "name": "MySQL Insert Listing",
+      "alwaysOutputData": true,
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "4dda03e9-d086-4c2b-b694-60902df24b9e",
+              "leftValue": "={{$node[\"MySQL Check Conversation\"].json[\"current_step\"]}}",
+              "rightValue": "completed",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1872,
+        704
+      ],
+      "id": "51ed79df-9159-4650-8554-bbe0b012286f",
+      "name": "IF Step Is Completed"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b5c2b0e5-30f0-45be-be44-eeff93aa6277",
+              "leftValue": "={{$node[\"MySQL Check Conversation\"].json[\"current_step\"]}}",
+              "rightValue": "start",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        576,
+        -176
+      ],
+      "id": "6ba9aebc-5c7d-4840-87ec-5fb0c3c67e86",
+      "name": "IF Step Is Start"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM listings\nWHERE category = 'Products'\nORDER BY id DESC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        -336,
+        432
+      ],
+      "id": "702e5cff-39ef-48fa-8ea1-a19c1c552f6d",
+      "name": "MySQL Set Step Start To Category",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "2c13155e-2812-44ce-b266-140099747a86",
+              "leftValue": "={{$node[\"Prepare Message Data\"].json[\"message_text\"].toLowerCase()}}",
+              "rightValue": "^(yes|y|ok|okay|sure|start|let's start|lets start)$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        496
+      ],
+      "id": "30810118-b2ca-4f0f-8362-e26d36f41eec",
+      "name": "IF User Wants To Start Listing",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT product_name, category, price, description, stock_status\nFROM products\nWHERE LOWER(product_name) LIKE CONCAT('%', LOWER('{{$node[\"Prepare Message Data\"].json[\"message_text\"]}}'), '%')\nLIMIT 1;;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        384,
+        -448
+      ],
+      "id": "1bf99ce0-e429-444f-8b10-43357062a5f0",
+      "name": "MySQL Search Product",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Product search result:\nProduct name: {{$json.product_name}}\nCategory: {{$json.category}}\nPrice: {{$json.price}}\nDescription: {{$json.description}}\nStock status: {{$json.stock_status}}\n\nWrite a short friendly reply for WhatsApp.\nMention the product name, price, description, and stock status.",
+        "options": {
+          "systemMessage": "=You are a friendly supermarket assistant.\nReturn a short, clear, friendly reply.\nUse only the product data provided.\nIf no product is found, say:\nSorry, I could not find that product in the supermarket database."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        800,
+        -1312
+      ],
+      "id": "5b378421-63b8-4d6a-a4f4-ccbf928c7078",
+      "name": "AI Agent IKAAS Products"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        800,
+        -1168
+      ],
+      "id": "560dc5cd-6552-4257-8150-ae6a210eb6d2",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "poCj1mM7MoGHCFsn",
+          "name": "OpenAI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b7c0b1c7-5b9d-4225-a621-13488da41a4a",
+              "name": "reply_text",
+              "value": "={{$node[\"AI Agent\"].json[\"output\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2384,
+        208
+      ],
+      "id": "c11b60ff-31cb-42e3-97e5-66d24dc9f514",
+      "name": "Prepare Final Reply"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b7c0b1c7-5b9d-4225-a621-13488da41a4a",
+              "name": "reply_text",
+              "value": "={{$node[\"AI Agent IKAAS Products\"].json[\"output\"]}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1312,
+        -1280
+      ],
+      "id": "db2da699-89f9-4806-856b-87e355a9d7e1",
+      "name": "Prepare Final Reply Product"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "095531ac-2b85-403e-a356-98d07b2232df",
+              "leftValue": "={{$node[\"Prepare Message Data\"].json[\"message_text\"].trim()}}",
+              "rightValue": "1",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        704,
+        -752
+      ],
+      "id": "e82f705e-1258-4679-b95c-cbb1a69ee1da",
+      "name": "IF Start Option Is 1"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET current_step = 'category'\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1152,
+        -736
+      ],
+      "id": "ca4f3c44-327a-499b-a219-b7d278c1feec",
+      "name": "MySQL Set Step To Category From Menu",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "8f5a89b5-e804-49ca-956e-47060ff1ff25",
+              "leftValue": "={{$node[\"Prepare Message Data\"].json[\"message_text\"].trim()}}",
+              "rightValue": "3",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1024,
+        -512
+      ],
+      "id": "2b3caac9-15e7-4b59-a339-3e73690c7cfb",
+      "name": "IF Start Option Is 3"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET current_step = 'products_menu'\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1456,
+        -640
+      ],
+      "id": "c83e3397-ad4a-41e9-b680-12e97432fa62",
+      "name": "MySQL Set Step To Products Menu",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e77dd5d0-6779-46d1-b09e-749b4a53f475",
+              "leftValue": "={{$node[\"Prepare Message Data\"].json[\"message_text\"].trim()}}",
+              "rightValue": "2",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        848,
+        -624
+      ],
+      "id": "5396632e-da0e-4c2f-8028-95c84e885b1b",
+      "name": "IF Start Option Is 2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "154b72b1-ef51-4ed5-b14d-43fc86c236c2",
+              "leftValue": "={{$json.current_step}}",
+              "rightValue": "products_menu",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        80,
+        -448
+      ],
+      "id": "97e4fb72-8e2e-4703-8204-c5b8cbee2622",
+      "name": "IF Step Is Products Menu"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "706bc453-f7bb-4aa5-9511-8598a21b829d",
+              "leftValue": "={{$node[\"Prepare Message Data\"].json[\"message_text\"].trim()}}",
+              "rightValue": "4",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1216,
+        -416
+      ],
+      "id": "2c1fdce1-0164-44dc-a772-d96dd9503788",
+      "name": "IF Start Option Is 4"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET current_step = 'help_menu'\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        1456,
+        -448
+      ],
+      "id": "38c8af1e-3cb9-4967-ac51-e652b12d7670",
+      "name": "MySQL Set Step To Help Menu",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET current_step = 'browse_menu'\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        864,
+        -384
+      ],
+      "id": "de0c56e9-7844-4922-ac53-db0fb018be5f",
+      "name": "MySQL Set Step To Browse Menu",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "bc02f17c-6073-4c8e-9c13-6d162aa00d9b",
+              "leftValue": "={{$json.current_step}}",
+              "rightValue": "browse_menu",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        224,
+        -576
+      ],
+      "id": "e71b7062-9f87-4563-bb9b-00f8a56199fd",
+      "name": "IF Step Is Browse Menu"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT category, title, description, contact_info, location\nFROM listings\nWHERE LOWER(category) = LOWER('{{$node[\"Prepare Message Data\"].json[\"message_text\"]}}')\nORDER BY id DESC\nLIMIT 5;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        368,
+        -880
+      ],
+      "id": "86ed4a07-7409-4524-86bd-8a105bc6db57",
+      "name": "MySQL Search Listings By Category",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $items(\"MySQL Search Listings By Category\");\n\nif (!items.length) {\n  return [\n    {\n      json: {\n        reply_text: \"Sorry, I could not find any listings in that category right now.\"\n      }\n    }\n  ];\n}\n\nconst category = items[0].json.category || \"selected\";\n\nconst reply =\n  `Here are the latest ${category} listings:\\n\\n` +\n  items.map((item, index) => {\n    return `${index + 1}. ${item.json.title}\\nDescription: ${item.json.description}\\nContact: ${item.json.contact_info}\\nLocation: ${item.json.location}`;\n  }).join(\"\\n\\n\");\n\nreturn [\n  {\n    json: {\n      reply_text: reply\n    }\n  }\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        528,
+        -992
+      ],
+      "id": "9fd9892f-62c2-4ac3-8d2b-ac11f63db786",
+      "name": "Build Browse Reply"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "da77c662-934c-4a9a-8aad-0d5db9f3bbe6",
+              "leftValue": "={{$node[\"Prepare Message Data\"].json[\"message_text\"].trim().toLowerCase()}}",
+              "rightValue": "menu",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -192,
+        0
+      ],
+      "id": "698d7700-268f-4c6b-895a-6d23915cacfd",
+      "name": "IF Reset To Menu"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET \n  category = NULL,\n  title = NULL,\n  description = NULL,\n  contact_info = NULL,\n  location = NULL,\n  current_step = 'start',\n  status = 'active'\nWHERE whatsapp_number = '{{$node[\"Prepare Message Data\"].json[\"from_number\"]}}';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        -16,
+        -816
+      ],
+      "id": "36efa521-7018-452d-9e70-9873beaffddf",
+      "name": "MySQL Reset Conversation To Start",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT whatsapp_number, current_step, category, title, description, contact_info, location, status\nFROM conversations\nWHERE whatsapp_number = '905338369108';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        2416,
+        720
+      ],
+      "id": "408d8c9e-dfe8-4d19-845f-913d7267dfc2",
+      "name": "kullanıcının hangi aşamada olduğu",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * \nFROM listings\nWHERE category = 'Products'\nORDER BY id DESC;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        2608,
+        512
+      ],
+      "id": "f3f28a89-fc27-4bad-a40d-e9555b2ff15e",
+      "name": "kaç listing var",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM products;",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        2816,
+        512
+      ],
+      "id": "9cf95d7f-1804-4b53-a935-7148d922ab88",
+      "name": "marketteki ürünler",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "UPDATE conversations\nSET \n  category = NULL,\n  title = NULL,\n  description = NULL,\n  contact_info = NULL,\n  location = NULL,\n  current_step = 'start',\n  status = 'active'\nWHERE whatsapp_number = '905338369108';",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        2400,
+        512
+      ],
+      "id": "d5d2af5a-469d-455f-9809-7db7a517e2a4",
+      "name": "sıfırlama",
+      "credentials": {
+        "mySql": {
+          "id": "Qlg06195uHUAxpsg",
+          "name": "MySQL account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Prepare Message Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Prepare Final Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send message": {
+      "main": [
+        []
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "MySQL Check Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Check Conversation": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Create Conversation": {
+      "main": [
+        [
+          {
+            "node": "MySQL Set Step Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Set Step Category": {
+      "main": [
+        [
+          {
+            "node": "MySQL Read Current Step",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "IF Step Is Start",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MySQL Create Conversation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Save Category": {
+      "main": [
+        [
+          {
+            "node": "MySQL Read Current Step",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Read Current Step": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Valid Category": {
+      "main": [
+        [
+          {
+            "node": "MySQL Save Category",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MySQL Read Current Step",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Save Title": {
+      "main": [
+        [
+          {
+            "node": "MySQL Read Current Step After Title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Read Current Step After Title": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Message Data": {
+      "main": [
+        [
+          {
+            "node": "IF Reset To Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If Step is Category": {
+      "main": [
+        [
+          {
+            "node": "If Valid Category",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF Step Is Title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Step Is Title": {
+      "main": [
+        [
+          {
+            "node": "MySQL Save Title",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF Step Is Description",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Step Is Description": {
+      "main": [
+        [
+          {
+            "node": "MySQL Save Description",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF Step Is Contact Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Save Description": {
+      "main": [
+        [
+          {
+            "node": "MySQL Read Current Step After Description",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Read Current Step After Description": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Step Is Contact Info": {
+      "main": [
+        [
+          {
+            "node": "MySQL Save Contact Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF Step Is Location",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Save Contact Info": {
+      "main": [
+        [
+          {
+            "node": "MySQL Read Current Step After Contact Info",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Read Current Step After Contact Info": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Step Is Location": {
+      "main": [
+        [
+          {
+            "node": "MySQL Save Location",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF Step Is Completed",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Save Location": {
+      "main": [
+        [
+          {
+            "node": "MySQL Read Current Step After Location",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Read Current Step After Location": {
+      "main": [
+        [
+          {
+            "node": "MySQL Insert Listing",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Insert Listing": {
+      "main": [
+        []
+      ]
+    },
+    "IF Step Is Completed": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF Step Is Products Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Step Is Start": {
+      "main": [
+        [
+          {
+            "node": "IF Start Option Is 1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If Step is Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Set Step Start To Category": {
+      "main": [
+        []
+      ]
+    },
+    "IF User Wants To Start Listing": {
+      "main": [
+        [
+          {
+            "node": "MySQL Set Step Category",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Search Product": {
+      "main": [
+        [
+          {
+            "node": "AI Agent IKAAS Products",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent IKAAS Products",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent IKAAS Products": {
+      "main": [
+        [
+          {
+            "node": "Prepare Final Reply Product",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Final Reply Product": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Final Reply": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Start Option Is 1": {
+      "main": [
+        [
+          {
+            "node": "MySQL Set Step To Category From Menu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF Start Option Is 2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Set Step To Category From Menu": {
+      "main": [
+        [
+          {
+            "node": "MySQL Read Current Step",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Start Option Is 3": {
+      "main": [
+        [
+          {
+            "node": "MySQL Set Step To Products Menu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF Start Option Is 4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Set Step To Products Menu": {
+      "main": [
+        [
+          {
+            "node": "MySQL Read Current Step",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Step Is Products Menu": {
+      "main": [
+        [
+          {
+            "node": "MySQL Search Product",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF Step Is Browse Menu",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Start Option Is 4": {
+      "main": [
+        [
+          {
+            "node": "MySQL Set Step To Help Menu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Set Step To Help Menu": {
+      "main": [
+        [
+          {
+            "node": "MySQL Read Current Step",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Start Option Is 2": {
+      "main": [
+        [
+          {
+            "node": "MySQL Set Step To Browse Menu",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF Start Option Is 3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Set Step To Browse Menu": {
+      "main": [
+        [
+          {
+            "node": "MySQL Read Current Step",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Step Is Browse Menu": {
+      "main": [
+        [
+          {
+            "node": "MySQL Search Listings By Category",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Search Listings By Category": {
+      "main": [
+        [
+          {
+            "node": "Build Browse Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Browse Reply": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF Reset To Menu": {
+      "main": [
+        [
+          {
+            "node": "MySQL Reset Conversation To Start",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MySQL Reset Conversation To Start": {
+      "main": [
+        [
+          {
+            "node": "MySQL Read Current Step",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "kaç listing var": {
+      "main": [
+        [
+          {
+            "node": "marketteki ürünler",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "sıfırlama": {
+      "main": [
+        [
+          {
+            "node": "kaç listing var",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "df5d4b49-c0f4-4fd2-ad78-73448be2a441",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "6e0792b3bc5ffcdf0b81edaa06a895904fc92feda41123ce1bdc2525f43e0b70"
+  },
+  "id": "40OnohYeyOBbWrbO",
+  "tags": []
+}
